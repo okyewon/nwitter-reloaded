@@ -68,11 +68,21 @@ const GlobalStyles = createGlobalStyle`
   ${reset};
   * {
     box-sizing: border-box;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    scrollbar-width: none;
   }
   body {
     background-color: black;
     color: white;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  button {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
   }
 `;
 

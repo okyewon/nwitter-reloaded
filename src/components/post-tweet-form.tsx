@@ -1,7 +1,8 @@
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 import styled from "styled-components";
-import { auth, db } from "../firebase";
+import { auth, db, storage } from "../firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 export default function PostTweetForm() {
   const [isLoading, setLoading] = useState(false);
@@ -13,8 +14,14 @@ export default function PostTweetForm() {
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target;
+    const maxSize = 2 * 1024 * 1024;
     if (files && files.length === 1) {
-      setFile(files[0]);
+      const uploadFile = files[0];
+      if (uploadFile && uploadFile.size > maxSize) {
+        alert("파일은 2MB 이하로 올려주세요 !");
+        return;
+      }
+      setFile(uploadFile);
     }
   };
 
@@ -25,13 +32,23 @@ export default function PostTweetForm() {
 
     try {
       setLoading(true);
-      await addDoc(collection(db, "tweets"), {
+      const doc = await addDoc(collection(db, "tweets"), {
         tweet,
         createAt: Date.now(),
         username: user.displayName || "Anonymous",
         userId: user.uid,
       });
+      if (file) {
+        const locationRef = ref(storage, `tweets/${user.uid}/${doc.id}`);
+        const result = await uploadBytes(locationRef, file);
+        const url = await getDownloadURL(result.ref);
+        await updateDoc(doc, {
+          photo: url,
+        });
+      }
+
       setTweet("");
+      setFile(null);
     } catch (e) {
       console.log(e);
     } finally {
@@ -42,6 +59,7 @@ export default function PostTweetForm() {
   return (
     <Form onSubmit={onSubmit}>
       <TextArea
+        required
         rows={5}
         maxLength={350}
         onChange={onChange}

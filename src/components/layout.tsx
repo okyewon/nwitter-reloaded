@@ -14,7 +14,10 @@ export default function Layout() {
   return (
     <Wrapper>
       <Menu>
-        <Link to="/">
+        <Link to="/" className="logo">
+          <Logo src="/Exclude.svg" alt="" />
+        </Link>
+        <Link to="/" className="menu-li">
           <MenuItem>
             <svg
               fill="none"
@@ -31,8 +34,9 @@ export default function Layout() {
               />
             </svg>
           </MenuItem>
+          <MenuText>Home</MenuText>
         </Link>
-        <Link to="/profile">
+        <Link to="/profile" className="menu-li">
           <MenuItem>
             <svg
               fill="none"
@@ -49,23 +53,27 @@ export default function Layout() {
               />
             </svg>
           </MenuItem>
+          <MenuText>Profile</MenuText>
         </Link>
-        <MenuItem className="log-out" onClick={onLogOut}>
-          <svg
-            fill="none"
-            strokeWidth={1.5}
-            stroke="orangered"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
-            />
-          </svg>
-        </MenuItem>
+        <LogOut className="menu-li">
+          <MenuItem className="log-out" onClick={onLogOut}>
+            <svg
+              fill="none"
+              strokeWidth={1.5}
+              stroke="orangered"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
+              />
+            </svg>
+          </MenuItem>
+          <MenuText>Log-Out</MenuText>
+        </LogOut>
       </Menu>
       <Outlet />
     </Wrapper>
@@ -75,18 +83,35 @@ export default function Layout() {
 const Wrapper = styled.div`
   display: grid;
   gap: 20px;
-  grid-template-columns: 1fr 4fr;
-  padding: 50px 0;
+  grid-template-columns: 1fr 3fr 1fr;
   width: 100%;
-  max-width: 860px;
+  max-width: 1440px;
+  padding: 50px 30px;
 `;
 
 const Menu = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 20px;
+
+  .logo {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .menu-li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 `;
+
+const Logo = styled.img`
+  width: 40px;
+`;
+
+const LogOut = styled.div``;
 
 const MenuItem = styled.div`
   display: flex;
@@ -109,3 +134,5 @@ const MenuItem = styled.div`
     }
   }
 `;
+
+const MenuText = styled.p``;
