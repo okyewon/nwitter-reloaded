@@ -102,6 +102,11 @@ const Wrapper = styled.div`
   padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 15px;
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 `;
 
 const Column = styled.div`
@@ -166,6 +171,10 @@ const UserButton = styled.button`
   font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
+
+  &.save {
+    background-color: yellow;
+  }
 
   &.edit {
     background-color: #77ff00;

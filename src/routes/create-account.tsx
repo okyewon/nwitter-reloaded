@@ -7,11 +7,12 @@ import {
   Error,
   Form,
   Input,
+  Or,
   Switcher,
   Title,
   Wrapper,
 } from "../components/auth-components";
-import GithubButton from "../components/github-btn";
+import SocialBtns from "../components/social-btns";
 
 export default function CreateAccount() {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ export default function CreateAccount() {
 
   return (
     <Wrapper>
-      <Title>Join X</Title>
+      <Title>Join - O</Title>
       <Form onSubmit={onSubmit}>
         <Input
           onChange={onChange}
@@ -92,10 +93,11 @@ export default function CreateAccount() {
         />
       </Form>
       {error !== "" ? <Error>{error}</Error> : null}
+      <Or>or</Or>
+      <SocialBtns />
       <Switcher>
         이미 가입하셨다면? <Link to="/login">로그인 &rarr;</Link>
       </Switcher>
-      <GithubButton />
     </Wrapper>
   );
 }

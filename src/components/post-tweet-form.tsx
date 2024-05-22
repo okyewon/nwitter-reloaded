@@ -3,11 +3,18 @@ import { useState } from "react";
 import styled from "styled-components";
 import { auth, db, storage } from "../firebase";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { FaUser } from "react-icons/fa6";
+import { TbPhotoFilled } from "react-icons/tb";
+import { BsSendFill } from "react-icons/bs";
+import { RiLoaderFill } from "react-icons/ri";
 
 export default function PostTweetForm() {
   const [isLoading, setLoading] = useState(false);
   const [tweet, setTweet] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const user = auth.currentUser;
+  const userAvatar = user?.photoURL;
+
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTweet(e.target.value);
   };
@@ -27,7 +34,6 @@ export default function PostTweetForm() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const user = auth.currentUser;
     if (!user || isLoading || tweet === "" || tweet.length > 350) return;
 
     try {
@@ -57,36 +63,54 @@ export default function PostTweetForm() {
   };
 
   return (
-    <Form onSubmit={onSubmit}>
-      <TextArea
-        required
-        rows={5}
-        maxLength={350}
-        onChange={onChange}
-        value={tweet}
-        placeholder="what is happening?"
-      />
-      <AttachFileButton htmlFor="file">
-        {file ? "Photo Added ✅" : "Add photo"}
-      </AttachFileButton>
-      <AttachFileInput
-        onChange={onFileChange}
-        type="file"
-        id="file"
-        accept="image/*"
-      />
-      <SubmitBtn
-        type="submit"
-        value={isLoading ? "Posting..." : "Post Tweet"}
-      />
-    </Form>
+    <Wrapper>
+      {!userAvatar ? <FaUser /> : <User src={userAvatar}></User>}
+      <Form onSubmit={onSubmit}>
+        <TextArea
+          required
+          rows={5}
+          maxLength={350}
+          onChange={onChange}
+          value={tweet}
+          placeholder="what is happening?"
+        />
+        <Buttons>
+          <div>
+            <AttachFileButton htmlFor="file" className="icon-btn">
+              {file ? "✅" : <TbPhotoFilled />}
+            </AttachFileButton>
+            <AttachFileInput
+              onChange={onFileChange}
+              type="file"
+              id="file"
+              accept="image/*"
+            />
+          </div>
+          <SubmitBtn className="icon-btn">
+            {isLoading ? <RiLoaderFill /> : <BsSendFill />}
+          </SubmitBtn>
+        </Buttons>
+      </Form>
+    </Wrapper>
   );
 }
 
+const Wrapper = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const User = styled.img`
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+`;
+
 const Form = styled.form`
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 `;
 
 const TextArea = styled.textarea`
@@ -107,31 +131,44 @@ const TextArea = styled.textarea`
   }
 `;
 
+const Buttons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  .icon-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      transform: translateY(-6px);
+    }
+  }
+`;
+
 const AttachFileButton = styled.label`
-  padding: 10px 0;
-  border-radius: 20px;
   border: 1px solid yellow;
-  font-size: 14px;
   color: yellow;
-  text-align: center;
-  cursor: pointer;
 `;
 
 const AttachFileInput = styled.input`
   display: none;
 `;
 
-const SubmitBtn = styled.input`
-  padding: 10px 0;
-  border-radius: 20px;
+const SubmitBtn = styled.button`
   border: none;
   background-color: yellow;
-  font-size: 1rem;
-  font-weight: 600;
   color: #000;
-  cursor: pointer;
+  transition: opacity 0.3s;
   &:hover,
   &:active {
-    opacity: 0.9;
+    opacity: 0.8;
   }
 `;

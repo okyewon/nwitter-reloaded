@@ -1,13 +1,13 @@
 import styled from "styled-components";
 import { auth, db, storage } from "../firebase";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaCheckCircle, FaRegEdit, FaUserCircle } from "react-icons/fa";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { updateProfile } from "firebase/auth";
+import { Unsubscribe, updateProfile } from "firebase/auth";
 import {
   collection,
-  getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   where,
@@ -18,57 +18,76 @@ import Tweet from "../components/tweet";
 export default function Profile() {
   const user = auth.currentUser;
   const [avatar, setAvatar] = useState(user?.photoURL);
+  const [backImg, setBackImg] = useState("");
   const [tweets, setTweets] = useState<ITweet[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [name, setName] = useState<string>(user?.displayName ?? "");
 
-  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { files } = e.target;
+  const onImgChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { files, id } = e.target;
     if (!user) return;
+
     if (files && files.length === 1) {
       const file = files[0];
-      const locationRef = ref(storage, `avatars/${user?.uid}`);
+      const target = id === "back" ? "backgrounds" : "avartar";
+      const locationRef = ref(storage, `${target}/${user?.uid}`);
       const result = await uploadBytes(locationRef, file);
-      const avatarURL = await getDownloadURL(result.ref);
-      setAvatar(avatarURL);
-      await updateProfile(user, {
-        photoURL: avatarURL,
-      });
+      const imgURL = await getDownloadURL(result.ref);
+
+      if (id && id === "back") {
+        setBackImg(imgURL);
+      } else if (id === "avatar") {
+        setAvatar(imgURL);
+        await updateProfile(user, {
+          photoURL: imgURL,
+        });
+      } else {
+        return;
+      }
     }
   };
 
-  const fetchTweets = useCallback(async () => {
-    if (!user) return;
-    const tweetQuery = query(
-      collection(db, "tweets"),
-      where("userId", "==", user.uid),
-      orderBy("createAt", "desc"),
-      limit(25)
-    );
-    const snapshot = await getDocs(tweetQuery);
-    const tweets = snapshot.docs.map((doc) => {
-      const { tweet, createAt, userId, username, photo } = doc.data();
-      return {
-        tweet,
-        createAt,
-        userId,
-        username,
-        photo,
-        id: doc.id,
-      };
-    });
-    setTweets(tweets);
-  }, [user]);
-
   useEffect(() => {
-    let isMounted = true;
-    if (user && isMounted) {
+    const getBackImg = async () => {
+      const locationRef = ref(storage, `backgrounds/${user?.uid}`);
+      const backImgURL = await getDownloadURL(locationRef);
+      setBackImg(backImgURL);
+    };
+    getBackImg();
+
+    let unsubscribe: Unsubscribe | null = null;
+    const fetchTweets = async () => {
+      if (!user) return;
+      const tweetQuery = query(
+        collection(db, "tweets"),
+        where("userId", "==", user.uid),
+        orderBy("createAt", "desc"),
+        limit(25)
+      );
+
+      unsubscribe = await onSnapshot(tweetQuery, (snapshot) => {
+        const tweets = snapshot.docs.map((doc) => {
+          const { tweet, createAt, userId, username, photo } = doc.data();
+          return {
+            tweet,
+            createAt,
+            userId,
+            username,
+            photo,
+            id: doc.id,
+          };
+        });
+        setTweets(tweets);
+      });
+    };
+
+    if (user) {
       fetchTweets();
     }
     return () => {
-      isMounted = false;
+      unsubscribe && unsubscribe();
     };
-  }, [user, fetchTweets]);
+  }, [user]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -88,35 +107,49 @@ export default function Profile() {
 
   return (
     <Wrapper>
-      <AvatarUpload htmlFor="avatar">
-        {avatar ? <AvatarImg src={avatar} /> : <FaUserCircle />}
-      </AvatarUpload>
-      <AvatarInput
-        onChange={onAvatarChange}
-        id="avatar"
-        type="file"
-        accept="image/*"
-      />
-      <NameWrap>
-        {editMode ? (
-          <>
-            <InputWrap>
-              <InputSize>{name}</InputSize>
-              <NameInput type="text" value={name} onChange={onChange} />
-            </InputWrap>
-            <NameSave type="button" onClick={onSave} className="btn">
-              <FaCheckCircle />
-            </NameSave>
-          </>
-        ) : (
-          <>
-            <Name>{name ?? "Anonymous"}</Name>
-            <NameEdit type="button" onClick={onEdit} className="btn">
-              <FaRegEdit />
-            </NameEdit>
-          </>
-        )}
-      </NameWrap>
+      <Category>Profile</Category>
+      <ProfileArea>
+        <BackUpload htmlFor="back">
+          {backImg ? <BackImg src={backImg} /> : ""}
+          <BackInput
+            onChange={onImgChange}
+            id="back"
+            type="file"
+            accept="image/*"
+          />
+        </BackUpload>
+        <AvatarWrap>
+          <AvatarUpload htmlFor="avatar">
+            {avatar ? <AvatarImg src={avatar} /> : <FaUserCircle />}
+          </AvatarUpload>
+          <AvatarInput
+            onChange={onImgChange}
+            id="avatar"
+            type="file"
+            accept="image/*"
+          />
+          <NameWrap>
+            {editMode ? (
+              <InputWrap className="name">
+                <InputSize>{name}</InputSize>
+                <NameInput type="text" value={name} onChange={onChange} />
+                <NameSave type="button" onClick={onSave} className="btn">
+                  <FaCheckCircle />
+                </NameSave>
+              </InputWrap>
+            ) : (
+              <Name className="name">
+                {name ?? "Anonymous"}
+                <NameEdit type="button" onClick={onEdit} className="btn">
+                  <FaRegEdit />
+                </NameEdit>
+              </Name>
+            )}
+            <br />
+            <Email>{user?.email}</Email>
+          </NameWrap>
+        </AvatarWrap>
+      </ProfileArea>
       <Tweets>
         {tweets.map((tweet) => (
           <Tweet key={tweet.id} {...tweet} />
@@ -130,22 +163,66 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 20px;
+`;
+
+const Category = styled.h2`
+  width: 100%;
+  padding: 0 10px 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+`;
+
+const ProfileArea = styled.div`
+  position: relative;
+  width: 100%;
+  height: 200px;
+  margin-bottom: 150px;
+`;
+
+const BackUpload = styled.label`
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background-color: #333;
+`;
+
+const BackImg = styled.img`
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+`;
+
+const BackInput = styled.input`
+  display: none;
+`;
+
+const AvatarWrap = styled.div`
+  position: absolute;
+  top: calc(100% - 100px);
+  left: 5%;
 `;
 
 const AvatarUpload = styled.label`
   overflow: hidden;
-  width: 100px;
-  height: 100px;
+  display: block;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  font-size: 100px;
-  color: yellow;
+  background-color: #000;
+  color: #ccc;
   cursor: pointer;
+  svg {
+    width: 100%;
+    height: 100%;
+  }
 `;
 
 const AvatarImg = styled.img`
-  width: 100px;
-  height: 100px;
+  width: 200px;
+  height: 200px;
   object-fit: cover;
 `;
 
@@ -154,7 +231,13 @@ const AvatarInput = styled.input`
 `;
 
 const NameWrap = styled.div`
-  position: relative;
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 20px);
+
+  .name {
+    position: relative;
+  }
 
   .btn {
     position: absolute;
@@ -203,6 +286,12 @@ const NameSave = styled.button`
 
 const NameEdit = styled.button`
   color: #fff;
+`;
+
+const Email = styled.span`
+  font-size: 1rem;
+  line-height: 2;
+  color: #ccc;
 `;
 
 const Tweets = styled.div`

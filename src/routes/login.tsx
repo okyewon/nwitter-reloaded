@@ -7,11 +7,12 @@ import {
   Error,
   Form,
   Input,
+  Or,
   Switcher,
   Title,
   Wrapper,
 } from "../components/auth-components";
-import GithubButton from "../components/github-btn";
+import SocialBtns from "../components/social-btns";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -70,6 +71,8 @@ export default function Login() {
         <Input type="submit" value={isLoading ? "Loading..." : "Log in"} />
       </Form>
       {error !== "" ? <Error>{error}</Error> : null}
+      <Or>or</Or>
+      <SocialBtns />
       <Switcher>
         아직 회원이 아니신가요?{" "}
         <Link to="/create-account">회원가입 &rarr;</Link>
@@ -78,7 +81,6 @@ export default function Login() {
         비밀번호를 잊으셨나요?{" "}
         <Link to="/reset-password">비밀번호 재설정 &rarr;</Link>
       </Switcher>
-      <GithubButton />
     </Wrapper>
   );
 }

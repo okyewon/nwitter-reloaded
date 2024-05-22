@@ -1,6 +1,5 @@
 import {
   collection,
-  getDocs,
   limit,
   onSnapshot,
   orderBy,
@@ -32,11 +31,6 @@ export default function Timeline() {
         orderBy("createAt", "desc"),
         limit(25)
       );
-      /* const snapshot = await getDocs(tweetsQuery);
-      const tweets = snapshot.docs.map((doc) => {
-        const { tweet, createAt, userId, username, photo } = doc.data();
-        return { tweet, createAt, userId, username, photo, id: doc.id };
-      }); */
 
       // onSnapshot이 구독 취소 함수를 반환
       unsubscribe = await onSnapshot(tweetsQuery, (snapshot) => {
