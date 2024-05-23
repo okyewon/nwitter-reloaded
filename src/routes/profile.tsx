@@ -29,7 +29,7 @@ export default function Profile() {
 
     if (files && files.length === 1) {
       const file = files[0];
-      const target = id === "back" ? "backgrounds" : "avartar";
+      const target = id === "back" ? "backgrounds" : "avatars";
       const locationRef = ref(storage, `${target}/${user?.uid}`);
       const result = await uploadBytes(locationRef, file);
       const imgURL = await getDownloadURL(result.ref);

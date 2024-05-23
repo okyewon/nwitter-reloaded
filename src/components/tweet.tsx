@@ -1,27 +1,38 @@
 import styled from "styled-components";
 import { ITweet } from "./timeline";
-import { FaRegTrashCan } from "react-icons/fa6";
+import { FaRegTrashCan, FaUser } from "react-icons/fa6";
 import { auth, db, storage } from "../firebase";
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { deleteObject, ref } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 import { RiEditLine } from "react-icons/ri";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
 export default function Tweet({ userId, username, photo, tweet, id }: ITweet) {
-  const user = auth.currentUser?.uid;
+  const user = auth.currentUser;
   const dbTextRef = useRef(null);
   const editTextRef = useRef(null);
   const [editMode, setEditMode] = useState(false);
   const [text, setText] = useState(tweet);
+  const [avatar, setAvatar] = useState("");
+
+  useEffect(() => {
+    const getAvatarImg = async () => {
+      const locationRef = ref(storage, `avatars/${userId}`);
+      console.log(locationRef);
+      const avatarURL = await getDownloadURL(locationRef);
+      setAvatar(avatarURL);
+    };
+    getAvatarImg();
+  }, [userId]);
 
   const onDelete = async () => {
     const ok = confirm("Are you sure you want to delete?");
-    if (!ok || user !== userId) return;
+    if (!ok || user?.uid !== userId) return;
     try {
       await deleteDoc(doc(db, "tweets", id));
       if (photo) {
-        const photoRef = ref(storage, `tweets/${user}/${id}`);
+        const photoRef = ref(storage, `tweets/${user?.uid}/${id}`);
         await deleteObject(photoRef);
       }
     } catch (e) {
@@ -30,7 +41,7 @@ export default function Tweet({ userId, username, photo, tweet, id }: ITweet) {
   };
 
   const onEdit = async () => {
-    if (user !== userId) return;
+    if (user?.uid !== userId) return;
 
     setEditMode(true);
   };
@@ -53,7 +64,16 @@ export default function Tweet({ userId, username, photo, tweet, id }: ITweet) {
   return (
     <Wrapper>
       <Column className="texts">
-        <Username>{username}</Username>
+        <UserInfo>
+          {!avatar ? (
+            <Icon>
+              <FaUser />
+            </Icon>
+          ) : (
+            <User src={avatar}></User>
+          )}
+          <Username>{username}</Username>
+        </UserInfo>
         {editMode ? (
           <EditText
             ref={editTextRef}
@@ -69,7 +89,7 @@ export default function Tweet({ userId, username, photo, tweet, id }: ITweet) {
             {tweet}
           </Payload>
         )}
-        {user === userId ? (
+        {user?.uid === userId ? (
           <UserButtons>
             {editMode ? (
               <UserButton className="save" onClick={saveEdit} type="button">
@@ -119,11 +139,26 @@ const Column = styled.div`
   }
 `;
 
-const Photo = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 15px;
-  object-fit: cover;
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const Icon = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #fff;
+`;
+
+const User = styled.img`
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
 `;
 
 const Username = styled.span`
@@ -184,4 +219,11 @@ const UserButton = styled.button`
     background-color: orangered;
     color: #fff;
   }
+`;
+
+const Photo = styled.img`
+  width: 100px;
+  height: 100px;
+  border-radius: 15px;
+  object-fit: cover;
 `;
