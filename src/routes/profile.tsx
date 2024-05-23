@@ -25,10 +25,15 @@ export default function Profile() {
 
   const onImgChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files, id } = e.target;
+    const maxSize = 2 * 1024 * 1024;
     if (!user) return;
 
     if (files && files.length === 1) {
       const file = files[0];
+      if (file && file.size > maxSize) {
+        alert("파일은 2MB 이하로 올려주세요 !");
+        return;
+      }
       const target = id === "back" ? "backgrounds" : "avatars";
       const locationRef = ref(storage, `${target}/${user?.uid}`);
       const result = await uploadBytes(locationRef, file);
